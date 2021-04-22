@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Dashboard</title>
+</head>
+
+<body>
+<div class="dashboard">
+    <input type="button" class="show__users" id="action-btn-users" value="Show Recently Joined Users"/><br/><br/>
+	<input type="button" class="show__users" id="action-btn-states" value="Show Parent-child DB records (States - cities)"/>
+    <table id="table" id="table">
+        <thead></thead>
+        <tfoot></tfoot>
+        <tbody></tbody>
+    </table>
+    <button class="app__logout" title="Logout" onclick="window.location.href='index.html'">
+        <svg class="app__logout-icon svg-icon" viewBox="0 0 20 20">
+            <path d="M6,3 a8,8 0 1,0 8,0 M10,0 10,12"/>
+        </svg>
+    </button>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+
+    el('action-btn-users').addEventListener('click', function () {
+        // Get the mysql service
+        getFirstTenRowsUsers(function (rows) {
+            var html = '';
+
+            rows.forEach(function (row) {
+                html += '<tr>';
+                html += '<td>';
+                html += row.id;
+                html += '</td>';
+                html += '<td>';
+                html += row.display_name;
+                html += '</td>';
+                html += '<td>';
+                html += row.city;
+                html += '</td>';
+                html += '</tr>';
+   
+            });
+
+            document.querySelector('#table > tbody').innerHTML = html;
+            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
+            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
+
+        });
+    }, false);
+	
+	el('action-btn-states').addEventListener('click', function () {
+        // Get the mysql service
+        getFirstTenRowsStates(function (rows) {
+            var html = '';
+
+            rows.forEach(function (row) {
+                html += '<tr>';
+                html += '<td>';
+                html += row.state_code;
+                html += '</td>';
+                html += "<td><a href=\"#\" onclick=\"showcities('" + row.state_code + "')\">";
+                html += row.fullname;
+                html += '</a></td>';
+                html += '<td>';
+                html += row.type;
+                html += '</td>';
+                html += '</tr>';
+
+            });
+
+            document.querySelector('#table > tbody').innerHTML = html;
+            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">State Code</th> <th scope="col">Name</th> <th scope="col">Type</th> </tr>';
+            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">5 States listed here.</td> </tr>';
+
+        });
+    }, false);
+	
+	function showcities (state_code) {
+        // Get the mysql service
+        getFirstTenRowsCities(function (rows) {
+            var html = '';
+
+            rows.forEach(function (row) {
+                html += '<tr>';
+                html += '<td>';
+                html += row.id;
+                html += '</td>';
+                html += '<td>';
+                html += row.city;
+                html += '</td>';
+                html += '</tr>';
+          
+            });
+
+            document.querySelector('#table > tbody').innerHTML = html;
+            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">City</th></tr>';
+            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="2">Cities listed here.</td> </tr>';
+		}, state_code);
+	}
+
+    function getFirstTenRowsUsers(callback) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        // Add the credentials to access your database
+        var connection = mysql.createConnection(config.db);
+
+        // connect to mysql
+        connection.connect(function (err) {
+            // in case of error
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        // Perform a query
+        $query = 'SELECT id, display_name, city FROM user_profile ORDER BY id DESC LIMIT 10';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            callback(rows);
+
+            console.log("Query succesfully executed");
+        });
+
+        // Close the connection
+        connection.end(function () {
+            // The connection has been closed
+        });
+    }
+	
+	
+	function getFirstTenRowsStates(callback) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        // Add the credentials to access your database
+        var connection = mysql.createConnection(config.db);
+
+        // connect to mysql
+        connection.connect(function (err) {
+            // in case of error
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        // Perform a query
+        $query = "SELECT id,state_code, fullname, type FROM states ORDER BY id LIMIT 5";
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            callback(rows);
+
+        });
+
+        // Close the connection
+        connection.end(function () {
+            // The connection has been closed
+        });
+    }
+	
+	function getFirstTenRowsCities(callback,state_code) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        // Add the credentials to access your database
+        var connection = mysql.createConnection(config.db);
+
+        // connect to mysql
+        connection.connect(function (err) {
+            // in case of error
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        // Perform a query
+        $query = "SELECT id, city, state_code FROM cities where state_code ='" + state_code + "' ORDER BY id LIMIT 10";
+		
+		//console.log($query);
+		
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            callback(rows);
+
+            //console.log("Query succesfully executed");
+        });
+
+        // Close the connection
+        connection.end(function () {
+            // The connection has been closed
+        });
+    }
+</script>
+</html>
